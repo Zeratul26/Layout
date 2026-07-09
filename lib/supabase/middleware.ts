@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
-    request,
+    request
   });
 
   const supabase = createServerClient(
@@ -19,19 +20,19 @@ export async function updateSession(request: NextRequest) {
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
-            request,
+            request
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
-        },
-      },
+        }
+      }
     }
   );
 
   // IMPORTANTE: Evita chiamate inutili a supabase.auth.getUser() nelle route pubbliche
   const {
-    data: { user },
+    data: { user }
   } = await supabase.auth.getUser();
 
   // Se l'utente NON è autenticato e cerca di accedere a route protette

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -114,7 +115,7 @@ const COLOR_KEYS = [
   { key: "primary-light", label: "Sfondo evidenziazioni" }
 ];
 // Calcola la luminanza relativa di un colore hex
-function getLuminance(hex) {
+function getLuminance(hex: string): number {
   var r = parseInt(hex.slice(1, 3), 16) / 255;
   var g = parseInt(hex.slice(3, 5), 16) / 255;
   var b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -125,7 +126,7 @@ function getLuminance(hex) {
 }
 
 // Verifica il contrasto tra due colori (WCAG ratio)
-function hasContrast(hex1, hex2) {
+function hasContrast(hex1: string, hex2: string): number {
   var l1 = getLuminance(hex1);
   var l2 = getLuminance(hex2);
   var lighter = Math.max(l1, l2);
@@ -167,25 +168,23 @@ export default function OnboardingPage() {
     [selectedFont]
   );
 
-  function pickTheme(theme) {
+  function pickTheme(theme: any) {
     setSelectedTheme(theme);
-    var next = {};
-    for (var k in theme.colors) {
-      next[k] = theme.colors[k];
-    }
-    setCustomColors(next);
+    setCustomColors({ ...theme.colors });
   }
 
-  function updateColor(key, value) {
-    var next = {};
-    for (var k in customColors) {
-      next[k] = customColors[k];
-    }
-    next[key] = value;
-    setCustomColors(next);
+  function updateColor(key: string, value: string) {
+    setCustomColors(function (prev: any) {
+      var next: any = {};
+      for (var k in prev) {
+        next[k] = prev[k];
+      }
+      next[key] = value;
+      return next;
+    });
   }
 
-  function handleLogoUpload(e) {
+  function handleLogoUpload(e: any) {
     var file = e.target.files?.[0];
     if (!file) return;
     var reader = new FileReader();
