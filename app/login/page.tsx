@@ -15,10 +15,8 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Parametri opzionali da URL
+  // Errore passato dal middleware o da altre route
   const redirectError = searchParams.get("error");
-  const redirectMessage = searchParams.get("message");
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +46,7 @@ function LoginContent() {
         throw new Error("Errore durante il login");
       }
 
-      router.push(redirectTo);
+      router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore durante il login");
@@ -77,11 +75,6 @@ function LoginContent() {
         </div>
 
         {/* Messaggi */}
-        {redirectMessage && (
-          <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-700 border border-blue-200">
-            {redirectMessage}
-          </div>
-        )}
         {redirectError && (
           <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-700 border border-yellow-200">
             {redirectError}

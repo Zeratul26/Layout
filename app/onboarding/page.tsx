@@ -147,6 +147,15 @@ export default function OnboardingPage() {
 
   var colors = customColors;
 
+  // Proteggi la route: se non loggato, redirect al login
+  useEffect(function () {
+    supabase.auth.getUser().then(function (result) {
+      if (!result.data.user) {
+        router.push("/login?error=Devi+effettuare+il+login+per+accedere");
+      }
+    });
+  }, []);
+
   // Carica il font selezionato da Google Fonts
   useEffect(
     function () {

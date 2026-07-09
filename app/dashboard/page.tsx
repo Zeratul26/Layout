@@ -3,15 +3,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SignOutButton } from "./sign-out-button";
 
-export default async function DashboardPage({
-  searchParams
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function DashboardPage() {
   const supabase = await createClient();
 
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
@@ -25,65 +21,17 @@ export default async function DashboardPage({
     .eq("id", user.id)
     .single();
 
-  // Se il tenant non ha ancora impostato il tema, reindirizza all'onboarding
-  if (tenant && !tenant.theme_settings) {
-    redirect("/onboarding");
-  }
-
-  const activated = searchParams.activated === "true";
-  const onboarded = searchParams.onboarded === "true";
-  const successMessage = searchParams.message?.toString();
-  const errorMessage = searchParams.error?.toString();
-
-  // Tema tenant
-  const theme = tenant?.theme_settings as {
-    appName?: string;
-    colors?: Record<string, string>;
-    font?: string;
-    fontName?: string;
-    logo?: string | null;
-  } | null;
-
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: theme?.colors?.background || "#F8FAFC",
-        fontFamily: theme?.font || "inherit"
-      }}
-    >
+    <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav
-        className="shadow-sm border-b"
-        style={{
-          backgroundColor: theme?.colors?.card || "#FFFFFF",
-          borderColor: theme?.colors?.primary || "#E5E7EB"
-        }}
-      >
+      <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              {theme?.logo && (
-                <img
-                  src={theme.logo}
-                  alt="Logo"
-                  className="h-8 w-auto object-contain"
-                />
-              )}
-              <h1
-                className="text-xl font-semibold"
-                style={{ color: theme?.colors?.text || "#0F172A" }}
-              >
-                {theme?.appName || "Dashboard"}
-              </h1>
-            </div>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Dashboard
+            </h1>
             <div className="flex items-center gap-4">
-              <span
-                className="text-sm"
-                style={{ color: theme?.colors?.["text-muted"] || "#64748B" }}
-              >
-                {user.email}
-              </span>
+              <span className="text-sm text-gray-500">{user.email}</span>
               <SignOutButton />
             </div>
           </div>
@@ -92,62 +40,6 @@ export default async function DashboardPage({
 
       {/* Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Messaggi da URL */}
-        {onboarded && (
-          <div
-            className="mb-8 rounded-md p-4 border"
-            style={{
-              backgroundColor: theme?.colors?.["primary-light"] || "#EFF6FF",
-              borderColor: theme?.colors?.primary || "#BFDBFE",
-              color: theme?.colors?.primary || "#1D4ED8"
-            }}
-          >
-            <p className="text-sm font-medium">
-              Configurazione completata! Benvenuto nella tua dashboard
-              personalizzata.
-            </p>
-          </div>
-        )}
-        {activated && (
-          <div className="mb-8 rounded-md bg-green-50 border border-green-200 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-green-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
-                  Account attivato con successo!
-                </h3>
-                <p className="mt-1 text-sm text-green-700">
-                  Il tuo account è ora attivo. Puoi iniziare a utilizzare tutte
-                  le funzionalità della piattaforma.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        {successMessage && (
-          <div className="mb-8 rounded-md bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700">
-            {successMessage}
-          </div>
-        )}
-        {errorMessage && (
-          <div className="mb-8 rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-            {errorMessage}
-          </div>
-        )}
-
         {/* Stato account */}
         <div className="mb-8">
           {tenant?.status === "pending" && (
@@ -213,96 +105,50 @@ export default async function DashboardPage({
         </div>
 
         {/* Scheda Azienda */}
-        <div
-          className="overflow-hidden rounded-lg shadow"
-          style={{
-            backgroundColor: theme?.colors?.card || "#FFFFFF"
-          }}
-        >
+        <div className="overflow-hidden rounded-lg bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
-            <h2
-              className="text-lg font-medium"
-              style={{ color: theme?.colors?.text || "#0F172A" }}
-            >
+            <h2 className="text-lg font-medium text-gray-900">
               Dati Azienda
             </h2>
-            <dl
-              className="mt-4 divide-y"
-              style={{
-                borderColor: theme?.colors?.primary
-                  ? theme.colors.primary + "20"
-                  : "#E5E7EB"
-              }}
-            >
+            <dl className="mt-4 divide-y divide-gray-200">
               <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt
-                  className="text-sm font-medium"
-                  style={{ color: theme?.colors?.["text-muted"] || "#64748B" }}
-                >
+                <dt className="text-sm font-medium text-gray-500">
                   Nome Azienda
                 </dt>
-                <dd
-                  className="mt-1 text-sm sm:col-span-2 sm:mt-0"
-                  style={{ color: theme?.colors?.text || "#0F172A" }}
-                >
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                   {tenant?.company_name || "—"}
                 </dd>
               </div>
               <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt
-                  className="text-sm font-medium"
-                  style={{ color: theme?.colors?.["text-muted"] || "#64748B" }}
-                >
-                  Email
-                </dt>
-                <dd
-                  className="mt-1 text-sm sm:col-span-2 sm:mt-0"
-                  style={{ color: theme?.colors?.text || "#0F172A" }}
-                >
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                   {user.email}
                 </dd>
               </div>
               <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt
-                  className="text-sm font-medium"
-                  style={{ color: theme?.colors?.["text-muted"] || "#64748B" }}
-                >
-                  Stato
-                </dt>
+                <dt className="text-sm font-medium text-gray-500">Stato</dt>
                 <dd className="mt-1 text-sm sm:col-span-2 sm:mt-0">
                   <span
-                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    style={{
-                      backgroundColor:
-                        tenant?.status === "active"
-                          ? (theme?.colors?.primary || "#2563EB") + "20"
-                          : "#FEF3C7",
-                      color:
-                        tenant?.status === "active"
-                          ? theme?.colors?.primary || "#2563EB"
-                          : "#92400E"
-                    }}
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      tenant?.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
                   >
                     {tenant?.status === "active" ? "Attivo" : "In attesa"}
                   </span>
                 </dd>
               </div>
               <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt
-                  className="text-sm font-medium"
-                  style={{ color: theme?.colors?.["text-muted"] || "#64748B" }}
-                >
+                <dt className="text-sm font-medium text-gray-500">
                   Data registrazione
                 </dt>
-                <dd
-                  className="mt-1 text-sm sm:col-span-2 sm:mt-0"
-                  style={{ color: theme?.colors?.text || "#0F172A" }}
-                >
+                <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                   {tenant?.created_at
                     ? new Date(tenant.created_at).toLocaleDateString("it-IT", {
                         year: "numeric",
                         month: "long",
-                        day: "numeric"
+                        day: "numeric",
                       })
                     : "—"}
                 </dd>
@@ -315,8 +161,7 @@ export default async function DashboardPage({
         <div className="mt-8">
           <Link
             href="/"
-            className="text-sm font-medium hover:opacity-80 transition-opacity"
-            style={{ color: theme?.colors?.primary || "#2563EB" }}
+            className="text-sm font-medium text-blue-600 hover:text-blue-500"
           >
             &larr; Torna alla home
           </Link>
