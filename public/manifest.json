@@ -1,0 +1,21 @@
+{
+  "name": "Layout - Gestione Aziendale",
+  "short_name": "Layout",
+  "description": "Piattaforma di gestione per la tua azienda",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
