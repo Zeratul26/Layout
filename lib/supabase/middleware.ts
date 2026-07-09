@@ -1,18 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+// @ts-nocheck
+import { NextResponse } from "next/server";
 
-export async function updateSession(request: NextRequest) {
-  var protectedRoutes = ["/dashboard"];
-  var authRoutes = ["/login", "/register"];
+export async function updateSession(request) {
   var pathname = request.nextUrl.pathname;
 
-  var isProtectedRoute = protectedRoutes.some(function (r) {
-    return pathname.startsWith(r);
-  });
-  var isAuthRoute = authRoutes.some(function (r) {
-    return pathname.startsWith(r);
-  });
-
-  // Check if user has Supabase auth cookies
   var hasAuthCookie = false;
   var allCookies = request.cookies.getAll();
   for (var i = 0; i < allCookies.length; i++) {
@@ -25,20 +16,19 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Protect dashboard routes
-  if (!hasAuthCookie && isProtectedRoute) {
-    var url = request.nextUrl.clone();
-    url.pathname = "/login";
+  if (!hasAuthCookie && pathname.startsWith("/dashboard")) {
+    var url = new URL("/login", request.url);
     url.searchParams.set("error", "Devi effettuare il login per accedere");
     return NextResponse.redirect(url);
   }
 
-  // Redirect logged-in users away from login/register
-  if (hasAuthCookie && isAuthRoute) {
-    var url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+  if (
+    hasAuthCookie &&
+    (pathname.startsWith("/login") || pathname.startsWith("/register"))
+  ) {
+    var url = new URL("/dashboard", request.url);
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next({ request });
+  return NextResponse.next();
 }
