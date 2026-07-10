@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       .single();
 
     if (tenant?.updated_at) {
-      iconVersion = `?v=${new Date(tenant.updated_at).getTime()}`;
+      iconVersion = `&v=${new Date(tenant.updated_at).getTime()}`;
     }
 
     if (tenant?.theme_settings) {
