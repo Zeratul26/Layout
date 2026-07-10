@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
   // Fallback: SVG data URI con iniziale e colore
   if (!iconSrc) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="${themeColor}"/></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="${themeColor}"/><text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="280" font-weight="700" fill="white">${initial}</text></svg>`;
     iconSrc = `data:image/svg+xml;base64,${Buffer.from(svg, "utf-8").toString("base64")}`;
   }
 
