@@ -19,19 +19,12 @@ export function PwaInstallButton() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowButton(true);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").then(() => {
-        // Se after 3 secondi beforeinstallprompt non è ancora arrivato,
-        // mostra comunque il pulsante su browser supportati (Chrome/Edge)
-        setTimeout(() => {
-          setShowButton((current) => current || "serviceWorker" in navigator);
-        }, 3000);
-      });
+      navigator.serviceWorker.register("/sw.js");
     }
 
     return () => window.removeEventListener("beforeinstallprompt", handler);
@@ -49,7 +42,7 @@ export function PwaInstallButton() {
 
   if (isInstalled) return null;
 
-  if (showButton) {
+  if (deferredPrompt) {
     return (
       <button
         onClick={handleInstall}
