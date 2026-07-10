@@ -135,7 +135,7 @@ function hasContrast(hex1: string, hex2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** Ridimensiona un'immagine a maxDim pixel (lato lungo) e restituisce data URL WebP */
+/** Ridimensiona un'immagine a maxDim pixel (lato lungo) e restituisce data URL PNG */
 function resizeImage(file: File, maxDim: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -157,7 +157,7 @@ function resizeImage(file: File, maxDim: number): Promise<string> {
         canvas.height = height;
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/webp", 0.8));
+        resolve(canvas.toDataURL("image/png"));
       };
       img.onerror = reject;
       img.src = e.target?.result as string;
