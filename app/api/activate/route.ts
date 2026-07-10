@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Reindirizza all'onboarding per la configurazione iniziale
-  return NextResponse.redirect(new URL("/onboarding", request.url));
+  // Reindirizza al login (l'utente farà l'onboarding dopo aver riaperto dal PC)
+  return NextResponse.redirect(
+    new URL("/login?message=Account+attivato!+Accedi+dal+tuo+PC+per+configurare+la+tua+dashboard.", request.url)
+  );
 }

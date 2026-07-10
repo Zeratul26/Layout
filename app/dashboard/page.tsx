@@ -21,6 +21,11 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single();
 
+  // Se l'account è attivo ma l'onboarding non è stato completato, reindirizza
+  if (tenant?.status === "active" && !tenant?.theme_settings) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
