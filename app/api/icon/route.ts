@@ -8,6 +8,10 @@ export async function GET(request: Request) {
     data: { user }
   } = await supabase.auth.getUser();
 
+  const { searchParams } = new URL(request.url);
+  const size = parseInt(searchParams.get("s") || "512");
+  const fontSize = Math.round(size * 0.55);
+
   let initial = "L";
   let primaryColor = "#2563EB";
 
@@ -52,9 +56,9 @@ export async function GET(request: Request) {
     (
       <div
         style={{
-          width: 512,
-          height: 512,
-          borderRadius: 80,
+          width: size,
+          height: size,
+          borderRadius: Math.round(size * 0.156),
           backgroundColor: primaryColor,
           display: "flex",
           alignItems: "center",
@@ -63,7 +67,7 @@ export async function GET(request: Request) {
       >
         <span
           style={{
-            fontSize: 280,
+            fontSize: fontSize,
             fontWeight: 700,
             color: "white",
             fontFamily: "Inter, sans-serif",
@@ -74,8 +78,8 @@ export async function GET(request: Request) {
       </div>
     ),
     {
-      width: 512,
-      height: 512,
+      width: size,
+      height: size,
       headers: {
         "Cache-Control": "private, max-age=3600",
       },

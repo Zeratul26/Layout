@@ -44,7 +44,10 @@ export async function GET(request: Request) {
     display: "standalone",
     background_color: bgColor,
     theme_color: themeColor,
-    icons: [{ src: iconUrl + iconVersion, sizes: "512x512" }]
+    icons: [
+      { src: iconUrl + "?s=192" + iconVersion, sizes: "192x192" },
+      { src: iconUrl + "?s=512" + iconVersion, sizes: "512x512" }
+    ]
   };
 
   return NextResponse.json(manifest, {

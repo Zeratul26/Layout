@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "Layout - Gestione Aziendale",
   description: "Piattaforma di gestione per la tua azienda",
   manifest: "/api/manifest",
+  icons: {
+    icon: "/api/icon?s=32",
+    apple: "/api/icon?s=192",
+  },
   appleWebApp: {
     capable: true,
     title: "Layout",
