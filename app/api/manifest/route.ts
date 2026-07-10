@@ -13,8 +13,10 @@ export async function GET(request: Request) {
   let themeColor = "#2563EB";
   const iconUrl = request.url.replace("/api/manifest", "/api/icon");
 
+  let uid = "";
   let iconVersion = "";
   if (user) {
+    uid = user.id;
     const { data: tenant } = await supabase
       .from("tenants")
       .select("theme_settings, updated_at")
@@ -45,8 +47,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconUrl + "?s=192" + iconVersion, sizes: "192x192" },
-      { src: iconUrl + "?s=512" + iconVersion, sizes: "512x512" }
+      { src: iconUrl + "?s=192&uid=" + uid + iconVersion, sizes: "192x192" },
+      { src: iconUrl + "?s=512&uid=" + uid + iconVersion, sizes: "512x512" }
     ]
   };
 

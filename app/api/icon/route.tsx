@@ -3,51 +3,46 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const { searchParams } = new URL(request.url);
+
+  // Supporta uid passato come query param (per icone PWA senza auth cookie)
+  let tenantId = searchParams.get("uid") || null;
+  if (!tenantId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    tenantId = user?.id || null;
+  }
 
   // Debug: se ?debug=1, mostra info invece dell'immagine
-  const { searchParams } = new URL(request.url);
   if (searchParams.get("debug") === "1") {
-    const tenantInfo = user
-      ? await supabase.from("tenants").select("theme_settings").eq("id", user.id).single()
+    const tenantInfo = tenantId
+      ? await supabase.from("tenants").select("theme_settings").eq("id", tenantId).single()
       : null;
     return NextResponse.json({
-      userFound: !!user,
-      userId: user?.id,
+      tenantId: tenantId,
       tenantFound: !!tenantInfo?.data,
       hasLogo: !!tenantInfo?.data?.theme_settings?.logo,
+      logoUrl: tenantInfo?.data?.theme_settings?.logo,
       appName: tenantInfo?.data?.theme_settings?.appName,
-      logoLength: tenantInfo?.data?.theme_settings?.logo?.length,
     });
   }
 
   let initial = "L";
   let primaryColor = "#2563EB";
 
-  if (user) {
+  if (tenantId) {
     const { data: tenant } = await supabase
       .from("tenants")
       .select("theme_settings")
-      .eq("id", user.id)
+      .eq("id", tenantId)
       .single();
 
-    // Se c'è un logo caricato, servilo
+    // Se c'è un logo (URL storage), redirect
     if (tenant?.theme_settings?.logo) {
       const logo: string = tenant.theme_settings.logo;
-      if (logo.startsWith("data:image/")) {
-        const parts = logo.split(",");
-        const mime = parts[0].split(":")[1].split(";")[0];
-        const base64 = parts[1];
-        const buffer = Buffer.from(base64, "base64");
-        return new NextResponse(buffer, {
-          headers: {
-            "Content-Type": mime,
-            "Cache-Control": "private, max-age=3600"
-          }
-        });
+      if (logo.startsWith("http")) {
+        return NextResponse.redirect(logo, { headers: { "Cache-Control": "private, max-age=3600" } });
       }
+    }
       if (logo.startsWith("http")) {
         return NextResponse.redirect(logo);
       }
