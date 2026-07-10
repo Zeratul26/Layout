@@ -1,5 +1,32 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { deflateSync } from "zlib";
+
+function solidPng(w: number, h: number, hex: string): Buffer {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const raw = Buffer.alloc((w * 3 + 1) * h);
+  for (let y = 0; y < h; y++) {
+    const row = y * (w * 3 + 1);
+    raw[row] = 0;
+    for (let x = 0; x < w; x++) {
+      const o = row + 1 + x * 3;
+      raw[o] = r; raw[o + 1] = g; raw[o + 2] = b;
+    }
+  }
+  const compressed = deflateSync(raw);
+  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  const crc32 = (buf: Buffer) => {
+    let c = 0xFFFFFFFF;
+    const tbl = new Int32Array(256).map((_, i) => { let cr = i; for (let j = 8; j--;) cr = cr & 1 ? 0xEDB88320 ^ (cr >>> 1) : cr >>> 1; return cr; });
+    for (let i = 0; i < buf.length; i++) c = tbl[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  };
+  const ck = (type: string, data: Buffer) => { const l = Buffer.alloc(4); l.writeUInt32BE(data.length); const t = Buffer.from(type); const d = Buffer.concat([t, data]); const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(d)); return Buffer.concat([l, t, data, crc]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
+  return Buffer.concat([sig, ck("IHDR", ihdr), ck("IDAT", compressed), ck("IEND", Buffer.alloc(0))]);
+}
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -61,12 +88,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // Fallback: quadrato colorato SVG (funziona su Chrome 96+)
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
-    <rect width="192" height="192" rx="30" fill="${primaryColor}"/>
-  </svg>`;
-
-  return new NextResponse(svg, {
-    headers: { "Content-Type": "image/svg+xml", "Cache-Control": "private, max-age=3600" },
+  // Fallback: quadrato colorato in vero PNG (supportato universalmente come icona PWA)
+  return new NextResponse(solidPng(192, 192, primaryColor), {
+    headers: { "Content-Type": "image/png", "Cache-Control": "private, max-age=3600" },
   });
 }
