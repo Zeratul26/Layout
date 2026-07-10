@@ -39,9 +39,9 @@ export async function GET(request: Request) {
       if (settings.appName) {
         initial = settings.appName.charAt(0).toUpperCase();
       }
-      // Usa logo (Storage URL) direttamente — come un file statico
+      // Usa icon route come proxy (stessa origine — niente CORS)
       if (settings.logo && typeof settings.logo === "string" && settings.logo.startsWith("http")) {
-        iconSrc = settings.logo;
+        iconSrc = `${request.url.replace("/api/manifest", "/api/icon")}?uid=${user.id}`;
       }
     }
   }
