@@ -238,19 +238,41 @@ export default function OnboardingPage() {
   async function handleSave() {
     setSaving(true);
     try {
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      if (!userId) throw new Error("Utente non trovato");
+
+      // Carica logo su Supabase Storage se presente
+      let logoSrc = null;
+      if (logoPreview) {
+        const base64 = logoPreview.split(",")[1];
+        const blob = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const filePath = `${userId}/logo.png`;
+        const { error: uploadError } = await supabase.storage
+          .from("logos")
+          .upload(filePath, blob, {
+            contentType: "image/png",
+            upsert: true,
+          });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from("logos")
+          .getPublicUrl(filePath);
+        logoSrc = urlData.publicUrl;
+      }
+
       const themeSettings = {
         appName: appName,
         theme: "personalizzato",
         colors: colors,
         font: selectedFont.value,
         fontName: selectedFont.name,
-        logo: logoPreview
+        logo: logoSrc
       };
-      const user = await supabase.auth.getUser();
       const result = await supabase
         .from("tenants")
         .update({ theme_settings: themeSettings })
-        .eq("id", user.data.user?.id);
+        .eq("id", userId);
       if (result.error) throw result.error;
       router.push("/dashboard");
       router.refresh();

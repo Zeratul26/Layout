@@ -29,3 +29,15 @@ CREATE POLICY "Users can update own tenant"
   ON tenants FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- Bucket Storage per i logo aziendali
+INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Anyone can view logos"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'logos');
+
+CREATE POLICY "Authenticated users can upload logos"
+  ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'logos' AND auth.role() = 'authenticated');
