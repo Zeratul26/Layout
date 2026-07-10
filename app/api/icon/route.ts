@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         return new NextResponse(buffer, {
           headers: {
             "Content-Type": mime,
-            "Cache-Control": "private, max-age=86400"
+            "Cache-Control": "private, max-age=3600"
           }
         });
       }

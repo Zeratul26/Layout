@@ -13,12 +13,17 @@ export async function GET(request: Request) {
   let themeColor = "#2563EB";
   const iconUrl = request.url.replace("/api/manifest", "/api/icon");
 
+  let iconVersion = "";
   if (user) {
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("theme_settings")
+      .select("theme_settings, updated_at")
       .eq("id", user.id)
       .single();
+
+    if (tenant?.updated_at) {
+      iconVersion = `?v=${new Date(tenant.updated_at).getTime()}`;
+    }
 
     if (tenant?.theme_settings) {
       const settings: any = tenant.theme_settings;
@@ -35,11 +40,11 @@ export async function GET(request: Request) {
     name: name,
     short_name: shortName,
     description: "Piattaforma di gestione aziendale",
-    start_url: "/login",
+    start_url: "/",
     display: "standalone",
     background_color: bgColor,
     theme_color: themeColor,
-    icons: [{ src: iconUrl, sizes: "512x512", type: "image/png" }]
+    icons: [{ src: iconUrl + iconVersion, sizes: "512x512" }]
   };
 
   return NextResponse.json(manifest, {
