@@ -43,10 +43,6 @@ export async function GET(request: Request) {
         return NextResponse.redirect(logo, { headers: { "Cache-Control": "private, max-age=3600" } });
       }
     }
-      if (logo.startsWith("http")) {
-        return NextResponse.redirect(logo);
-      }
-    }
 
     // Nessun logo: usa iniziale e colore dal tema
     if (tenant?.theme_settings?.appName) {
