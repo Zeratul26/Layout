@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/api/activate";
 
   if (code) {
     const supabase = await createClient();
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
     if (!error && data.user) {
       // Il tenant è già stato creato dal trigger su auth.users
-      // Redirect diretto alla dashboard
+      // Redirect a /api/activate per attivazione tenant, poi onboarding
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
