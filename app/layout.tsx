@@ -4,6 +4,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Layout - Gestione Aziendale",
   description: "Piattaforma di gestione per la tua azienda",
+  manifest: "/api/manifest",
+  appleWebApp: {
+    capable: true,
+    title: "Layout",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { SignOutButton } from "./sign-out-button";
+import { PwaInstallButton } from "@/components/pwa-install";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -157,14 +157,17 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Link utili */}
-        <div className="mt-8">
-          <Link
-            href="/"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500"
-          >
-            &larr; Torna alla home
-          </Link>
+        {/* PWA Install */}
+        <div className="mt-8 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Installa l&apos;app sul tuo dispositivo
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Aggiungi Layout alla schermata home per un accesso rapido
+            </p>
+          </div>
+          <PwaInstallButton />
         </div>
       </main>
     </div>
