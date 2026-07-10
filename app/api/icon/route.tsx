@@ -67,7 +67,7 @@ export async function GET(request: Request) {
       if (logoData.startsWith("data:image/")) {
         const [header, b64] = logoData.split(",");
         const mime = header.split(":")[1].split(";")[0];
-        return new NextResponse(Buffer.from(b64, "base64"), {
+        return new NextResponse(new Uint8Array(Buffer.from(b64, "base64")), {
           headers: { "Content-Type": mime, "Cache-Control": "private, max-age=3600" },
         });
       }
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         try {
           const resp = await fetch(logoData, { signal: AbortSignal.timeout(5000) });
           if (resp.ok) {
-            return new NextResponse(Buffer.from(await resp.arrayBuffer()), {
+            return new NextResponse(new Uint8Array(Buffer.from(await resp.arrayBuffer())), {
               headers: {
                 "Content-Type": resp.headers.get("content-type") || "image/png",
                 "Cache-Control": "private, max-age=3600",
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
   }
 
   // Fallback: quadrato colorato in vero PNG (supportato universalmente come icona PWA)
-  return new NextResponse(solidPng(192, 192, primaryColor), {
+  return new NextResponse(new Uint8Array(solidPng(192, 192, primaryColor)), {
     headers: { "Content-Type": "image/png", "Cache-Control": "private, max-age=3600" },
   });
 }
