@@ -242,22 +242,18 @@ export default function OnboardingPage() {
       const userId = user.data.user?.id;
       if (!userId) throw new Error("Utente non trovato");
 
-      // Carica logo su Supabase Storage se presente
+      // Salva logo: base64 nel DB (per icon route) + Storage (per uso generale)
       let logoSrc = null;
+      let logoBase64 = null;
       if (logoPreview) {
-        const base64 = logoPreview.split(",")[1];
-        const blob = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        logoBase64 = logoPreview; // data URI completo
+        const b64 = logoPreview.split(",")[1];
+        const blob = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
         const filePath = `${userId}/logo.png`;
-        const { error: uploadError } = await supabase.storage
+        await supabase.storage
           .from("logos")
-          .upload(filePath, blob, {
-            contentType: "image/png",
-            upsert: true,
-          });
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage
-          .from("logos")
-          .getPublicUrl(filePath);
+          .upload(filePath, blob, { contentType: "image/png", upsert: true });
+        const { data: urlData } = supabase.storage.from("logos").getPublicUrl(filePath);
         logoSrc = urlData.publicUrl;
       }
 
@@ -267,7 +263,8 @@ export default function OnboardingPage() {
         colors: colors,
         font: selectedFont.value,
         fontName: selectedFont.name,
-        logo: logoSrc
+        logo: logoSrc,
+        logoBase64: logoBase64
       };
       const result = await supabase
         .from("tenants")

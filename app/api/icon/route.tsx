@@ -5,28 +5,22 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
 
-  // Supporta uid passato come query param (per icone PWA senza auth cookie)
   let tenantId = searchParams.get("uid") || null;
   if (!tenantId) {
     const { data: { user } } = await supabase.auth.getUser();
     tenantId = user?.id || null;
   }
 
-  // Debug: se ?debug=1, mostra info invece dell'immagine
+  // Debug
   if (searchParams.get("debug") === "1") {
-    const tenantInfo = tenantId
+    const info = tenantId
       ? await supabase.from("tenants").select("theme_settings").eq("id", tenantId).single()
       : null;
     return NextResponse.json({
-      tenantId: tenantId,
-      tenantFound: !!tenantInfo?.data,
-      hasLogo: !!tenantInfo?.data?.theme_settings?.logo,
-      logoUrl: tenantInfo?.data?.theme_settings?.logo,
-      appName: tenantInfo?.data?.theme_settings?.appName,
+      tenantId, found: !!info?.data, settings: info?.data?.theme_settings,
     });
   }
 
-  let initial = "L";
   let primaryColor = "#2563EB";
 
   if (tenantId) {
@@ -36,44 +30,42 @@ export async function GET(request: Request) {
       .eq("id", tenantId)
       .single();
 
-    // Se c'è un logo (URL storage), proxy (stessa origine, niente CORS)
-    if (tenant?.theme_settings?.logo) {
-      const logo: string = tenant.theme_settings.logo;
-      if (logo.startsWith("http")) {
-        try {
-          const resp = await fetch(logo);
-          const buffer = Buffer.from(await resp.arrayBuffer());
-          return new NextResponse(buffer, {
-            headers: {
-              "Content-Type": resp.headers.get("content-type") || "image/png",
-              "Cache-Control": "private, max-age=3600"
-            }
-          });
-        } catch {
-          // Se fallisce, mostriamo il fallback SVG
-        }
-      }
-    }
+    const s = tenant?.theme_settings;
+    if (s?.colors?.primary) primaryColor = s.colors.primary;
 
-    // Nessun logo: usa iniziale e colore dal tema
-    if (tenant?.theme_settings?.appName) {
-      initial = tenant.theme_settings.appName.charAt(0).toUpperCase();
-    }
-    if (tenant?.theme_settings?.colors?.primary) {
-      primaryColor = tenant.theme_settings.colors.primary;
+    // Priorià a logoBase64 (data URI, senza fetch esterne)
+    const logoData = (s?.logoBase64 || s?.logo) as string | undefined;
+    if (logoData) {
+      if (logoData.startsWith("data:image/")) {
+        const [header, b64] = logoData.split(",");
+        const mime = header.split(":")[1].split(";")[0];
+        return new NextResponse(Buffer.from(b64, "base64"), {
+          headers: { "Content-Type": mime, "Cache-Control": "private, max-age=3600" },
+        });
+      }
+      // Se è un URL, fetch
+      if (logoData.startsWith("http")) {
+        try {
+          const resp = await fetch(logoData, { signal: AbortSignal.timeout(5000) });
+          if (resp.ok) {
+            return new NextResponse(Buffer.from(await resp.arrayBuffer()), {
+              headers: {
+                "Content-Type": resp.headers.get("content-type") || "image/png",
+                "Cache-Control": "private, max-age=3600",
+              },
+            });
+          }
+        } catch { /* fallback */ }
+      }
     }
   }
 
-  // Genera SVG (supportato da Chrome 96+ come icona PWA)
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-    <rect width="512" height="512" rx="80" fill="${primaryColor}"/>
-    <text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="280" font-weight="700" fill="white">${initial}</text>
+  // Fallback: quadrato colorato SVG (funziona su Chrome 96+)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+    <rect width="192" height="192" rx="30" fill="${primaryColor}"/>
   </svg>`;
 
   return new NextResponse(svg, {
-    headers: {
-      "Content-Type": "image/svg+xml",
-      "Cache-Control": "private, max-age=3600"
-    }
+    headers: { "Content-Type": "image/svg+xml", "Cache-Control": "private, max-age=3600" },
   });
 }
