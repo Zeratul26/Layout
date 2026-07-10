@@ -7,6 +7,22 @@ export async function GET(request: Request) {
     data: { user }
   } = await supabase.auth.getUser();
 
+  // Debug: se ?debug=1, mostra info invece dell'immagine
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get("debug") === "1") {
+    const tenantInfo = user
+      ? await supabase.from("tenants").select("theme_settings").eq("id", user.id).single()
+      : null;
+    return NextResponse.json({
+      userFound: !!user,
+      userId: user?.id,
+      tenantFound: !!tenantInfo?.data,
+      hasLogo: !!tenantInfo?.data?.theme_settings?.logo,
+      appName: tenantInfo?.data?.theme_settings?.appName,
+      logoLength: tenantInfo?.data?.theme_settings?.logo?.length,
+    });
+  }
+
   let initial = "L";
   let primaryColor = "#2563EB";
 
