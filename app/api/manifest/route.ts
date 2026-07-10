@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   let themeColor = "#2563EB";
   let initial = "L";
   let uid = "";
+  let hasLogo = false;
 
   if (user) {
     uid = user.id;
@@ -40,6 +41,7 @@ export async function GET(request: Request) {
       if (settings.appName) {
         initial = settings.appName.charAt(0).toUpperCase();
       }
+      hasLogo = !!(settings.logoBase64 || settings.logo);
     }
   }
 
@@ -56,8 +58,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconUrl, sizes: "192x192" },
-      { src: iconUrl, sizes: "512x512" }
+      { src: iconUrl, sizes: "192x192", type: hasLogo ? "image/png" : "image/svg+xml" },
+      { src: iconUrl, sizes: "512x512", type: hasLogo ? "image/png" : "image/svg+xml" }
     ]
   };
 
