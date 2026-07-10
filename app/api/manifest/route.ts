@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -8,11 +7,11 @@ export async function GET(request: Request) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  var name = "Layout - Gestione Aziendale";
-  var shortName = "Layout";
-  var bgColor = "#F8FAFC";
-  var themeColor = "#2563EB";
-  var iconUrl = request.url.replace("/api/manifest", "/api/icon");
+  let name = "Layout - Gestione Aziendale";
+  let shortName = "Layout";
+  let bgColor = "#F8FAFC";
+  let themeColor = "#2563EB";
+  const iconUrl = request.url.replace("/api/manifest", "/api/icon");
 
   if (user) {
     const { data: tenant } = await supabase
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
       .single();
 
     if (tenant?.theme_settings) {
-      var settings = tenant.theme_settings;
+      const settings: any = tenant.theme_settings;
       name = settings.appName || name;
       shortName = (settings.appName || "Layout").slice(0, 12);
       if (settings.colors) {
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
     }
   }
 
-  var manifest = {
+  const manifest = {
     name: name,
     short_name: shortName,
     description: "Piattaforma di gestione aziendale",

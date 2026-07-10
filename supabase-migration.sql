@@ -24,3 +24,8 @@ DROP POLICY IF EXISTS "Users can insert own tenant" ON tenants;
 CREATE POLICY "Users can view own tenant"
   ON tenants FOR SELECT
   USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own tenant"
+  ON tenants FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);

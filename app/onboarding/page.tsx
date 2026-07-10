@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -106,7 +105,9 @@ const FONTS = [
   { name: "Playfair Display", value: "Playfair Display, serif" }
 ];
 
-const COLOR_KEYS = [
+type ColorKey = "primary" | "primary-light" | "secondary" | "accent" | "background" | "card" | "text" | "text-muted";
+
+const COLOR_KEYS: { key: ColorKey; label: string }[] = [
   { key: "primary", label: "Colore principale (pulsanti, link)" },
   { key: "background", label: "Sfondo della pagina" },
   { key: "card", label: "Sfondo delle card" },
@@ -116,9 +117,9 @@ const COLOR_KEYS = [
 ];
 // Calcola la luminanza relativa di un colore hex
 function getLuminance(hex: string): number {
-  var r = parseInt(hex.slice(1, 3), 16) / 255;
-  var g = parseInt(hex.slice(3, 5), 16) / 255;
-  var b = parseInt(hex.slice(5, 7), 16) / 255;
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
   r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
   g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
   b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
@@ -127,25 +128,57 @@ function getLuminance(hex: string): number {
 
 // Verifica il contrasto tra due colori (WCAG ratio)
 function hasContrast(hex1: string, hex2: string): number {
-  var l1 = getLuminance(hex1);
-  var l2 = getLuminance(hex2);
-  var lighter = Math.max(l1, l2);
-  var darker = Math.min(l1, l2);
+  const l1 = getLuminance(hex1);
+  const l2 = getLuminance(hex2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
   return (lighter + 0.05) / (darker + 0.05);
 }
+
+/** Ridimensiona un'immagine a maxDim pixel (lato lungo) e restituisce data URL WebP */
+function resizeImage(file: File, maxDim: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/webp", 0.8));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 export default function OnboardingPage() {
-  var router = useRouter();
-  var supabase = createClient();
-  var fileInputRef = useRef(null);
+  const router = useRouter();
+  const supabase = createClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  var [appName, setAppName] = useState("La mia app");
-  var [selectedTheme, setSelectedTheme] = useState(THEMES[0]);
-  var [customColors, setCustomColors] = useState({ ...THEMES[0].colors });
-  var [selectedFont, setSelectedFont] = useState(FONTS[0]);
-  var [logoPreview, setLogoPreview] = useState(null);
-  var [saving, setSaving] = useState(false);
+  const [appName, setAppName] = useState("La mia app");
+  const [selectedTheme, setSelectedTheme] = useState(THEMES[0]);
+  const [customColors, setCustomColors] = useState<Record<ColorKey, string>>({ ...THEMES[0].colors as Record<ColorKey, string> });
+  const [selectedFont, setSelectedFont] = useState(FONTS[0]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  var colors = customColors;
+  const colors = customColors;
 
   // Proteggi la route: se non loggato, redirect al login
   useEffect(function () {
@@ -154,18 +187,18 @@ export default function OnboardingPage() {
         router.push("/login?error=Devi+effettuare+il+login+per+accedere");
       }
     });
-  }, []);
+  }, [supabase, router]);
 
   // Carica il font selezionato da Google Fonts
   useEffect(
     function () {
-      var fontName = selectedFont.value.split(",")[0].trim().replace(/ /g, "+");
-      var linkId = "google-font-theme";
-      var existing = document.getElementById(linkId);
+      const fontName = selectedFont.value.split(",")[0].trim().replace(/ /g, "+");
+      const linkId = "google-font-theme";
+      const existing = document.getElementById(linkId);
       if (existing) {
         existing.remove();
       }
-      var link = document.createElement("link");
+      const link = document.createElement("link");
       link.id = linkId;
       link.rel = "stylesheet";
       link.href =
@@ -177,36 +210,35 @@ export default function OnboardingPage() {
     [selectedFont]
   );
 
-  function pickTheme(theme: any) {
+  function pickTheme(theme: (typeof THEMES)[number]) {
     setSelectedTheme(theme);
     setCustomColors({ ...theme.colors });
   }
 
   function updateColor(key: string, value: string) {
-    setCustomColors(function (prev: any) {
-      var next: any = {};
-      for (var k in prev) {
-        next[k] = prev[k];
-      }
-      next[key] = value;
-      return next;
+    setCustomColors(function (prev) {
+      return { ...prev, [key]: value };
     });
   }
 
-  function handleLogoUpload(e: any) {
-    var file = e.target.files?.[0];
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      setLogoPreview(event.target?.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const resized = await resizeImage(file, 200);
+      setLogoPreview(resized);
+    } catch {
+      // fallback: carica senza resize
+      const reader = new FileReader();
+      reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      var themeSettings = {
+      const themeSettings = {
         appName: appName,
         theme: "personalizzato",
         colors: colors,
@@ -214,16 +246,13 @@ export default function OnboardingPage() {
         fontName: selectedFont.name,
         logo: logoPreview
       };
-      var user = await supabase.auth.getUser();
-      var result = await supabase
+      const user = await supabase.auth.getUser();
+      const result = await supabase
         .from("tenants")
         .update({ theme_settings: themeSettings })
         .eq("id", user.data.user?.id);
       if (result.error) throw result.error;
-      await supabase.auth.signOut();
-      router.push(
-        "/login?message=Configurazione+completata!+Effettua+il+login+per+accedere+con+il+nuovo+tema."
-      );
+      router.push("/dashboard");
       router.refresh();
     } catch (err) {
       alert("Errore durante il salvataggio. Riprova.");
