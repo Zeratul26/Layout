@@ -61,8 +61,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconSrc, sizes: "192x192" },
-      { src: iconSrc, sizes: "512x512" }
+      { src: iconSrc, sizes: "192x192", purpose: "any maskable" },
+      { src: iconSrc, sizes: "512x512", purpose: "any maskable" }
     ]
   };
 
