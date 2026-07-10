@@ -136,7 +136,7 @@ function hasContrast(hex1: string, hex2: string): number {
 }
 
 /** Ridimensiona un'immagine a maxDim pixel (lato lungo) e restituisce data URL PNG */
-function resizeImage(file: File, maxDim: number): Promise<string> {
+function resizeImage(file: File, maxDim: number = 96): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -225,7 +225,7 @@ export default function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const resized = await resizeImage(file, 200);
+      const resized = await resizeImage(file, 96);
       setLogoPreview(resized);
     } catch {
       // fallback: carica senza resize
