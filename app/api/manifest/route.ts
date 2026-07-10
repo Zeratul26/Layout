@@ -19,10 +19,9 @@ export async function GET(request: Request) {
   let bgColor = "#F8FAFC";
   let themeColor = "#2563EB";
   let initial = "L";
-  let uid = "";
+  let iconSrc = "";
 
   if (user) {
-    uid = user.id;
     const { data: tenant } = await supabase
       .from("tenants")
       .select("theme_settings")
@@ -40,12 +39,18 @@ export async function GET(request: Request) {
       if (settings.appName) {
         initial = settings.appName.charAt(0).toUpperCase();
       }
+      // Logo base64 direttamente nel manifest (zero fetch esterne)
+      if (settings.logoBase64 && typeof settings.logoBase64 === "string") {
+        iconSrc = settings.logoBase64;
+      }
     }
   }
 
-  // Usa l'icon route (solo se uid presente)
-  const baseIconUrl = request.url.replace("/api/manifest", "/api/icon");
-  const iconUrl = uid ? `${baseIconUrl}?uid=${uid}` : baseIconUrl;
+  // Fallback: SVG data URI con iniziale e colore
+  if (!iconSrc) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="${themeColor}"/></svg>`;
+    iconSrc = `data:image/svg+xml;base64,${Buffer.from(svg, "utf-8").toString("base64")}`;
+  }
 
   const manifest = {
     name: name,
@@ -56,8 +61,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png" },
-      { src: iconUrl, sizes: "512x512", type: "image/png" }
+      { src: iconSrc, sizes: "192x192" },
+      { src: iconSrc, sizes: "512x512" }
     ]
   };
 
