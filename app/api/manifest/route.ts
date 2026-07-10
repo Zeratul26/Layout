@@ -18,12 +18,10 @@ export async function GET(request: Request) {
   let shortName = "Layout";
   let bgColor = "#F8FAFC";
   let themeColor = "#2563EB";
-  let uid = "";
   let initial = "L";
-  let hasLogo = false;
+  let logoDataUri: string | null = null;
 
   if (user) {
-    uid = user.id;
     const { data: tenant } = await supabase
       .from("tenants")
       .select("theme_settings")
@@ -41,15 +39,23 @@ export async function GET(request: Request) {
       if (settings.appName) {
         initial = settings.appName.charAt(0).toUpperCase();
       }
-      hasLogo = !!(settings.logo && typeof settings.logo === "string");
+      // Se c'è un logo su Storage, scaricalo e incorporalo come data URI
+      if (settings.logo && typeof settings.logo === "string" && settings.logo.startsWith("http")) {
+        try {
+          const resp = await fetch(settings.logo, { signal: AbortSignal.timeout(3000) });
+          const buf = Buffer.from(await resp.arrayBuffer());
+          logoDataUri = `data:${resp.headers.get("content-type") || "image/png"};base64,${buf.toString("base64")}`;
+        } catch {
+          // fallback: usa SVG
+        }
+      }
     }
   }
 
-  // Usa sempre il nostro dominio per le icone (evita CORS con Storage)
-  const baseUrl = request.url.replace("/api/manifest", "/api/icon");
-  const iconSrc = hasLogo && uid
-    ? baseUrl + "?uid=" + uid
-    : `data:image/svg+xml;base64,${Buffer.from(svgIcon(initial, themeColor), "utf-8").toString("base64")}`;
+  // Icona: logo in data URI se disponibile, altrimenti SVG con iniziale e colore
+  const svgData = Buffer.from(svgIcon(initial, themeColor), "utf-8").toString("base64");
+  const iconSrc = logoDataUri || `data:image/svg+xml;base64,${svgData}`;
+  const iconType = logoDataUri ? "image/png" : "image/svg+xml";
 
   const manifest = {
     name: name,
@@ -60,8 +66,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconSrc, sizes: "192x192", type: hasLogo ? "image/png" : "image/svg+xml" },
-      { src: iconSrc, sizes: "512x512", type: hasLogo ? "image/png" : "image/svg+xml" }
+      { src: iconSrc, sizes: "192x192", type: iconType },
+      { src: iconSrc, sizes: "512x512", type: iconType }
     ]
   };
 
