@@ -4,7 +4,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Layout - Gestione Aziendale",
   description: "Piattaforma di gestione per la tua azienda",
-  manifest: "/api/manifest",
   icons: {
     icon: "/api/icon?s=32",
     apple: "/api/icon?s=192",
@@ -23,6 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it">
+      <link rel="manifest" href={`/api/manifest?_=${Date.now()}`} />
       <body className="min-h-screen bg-gray-50 antialiased">{children}</body>
     </html>
   );
