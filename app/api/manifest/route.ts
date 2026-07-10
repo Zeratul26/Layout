@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+function svgIcon(initial: string, color: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="80" fill="${color}"/>
+    <text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="280" font-weight="700" fill="white">${initial}</text>
+  </svg>`;
+}
+
 export async function GET(request: Request) {
   const supabase = await createClient();
   const {
@@ -11,21 +18,15 @@ export async function GET(request: Request) {
   let shortName = "Layout";
   let bgColor = "#F8FAFC";
   let themeColor = "#2563EB";
-  const iconUrl = request.url.replace("/api/manifest", "/api/icon");
+  let initial = "L";
+  let logoUrl: string | null = null;
 
-  let uid = "";
-  let iconVersion = "";
   if (user) {
-    uid = user.id;
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("theme_settings, updated_at")
+      .select("theme_settings")
       .eq("id", user.id)
       .single();
-
-    if (tenant?.updated_at) {
-      iconVersion = `&v=${new Date(tenant.updated_at).getTime()}`;
-    }
 
     if (tenant?.theme_settings) {
       const settings: any = tenant.theme_settings;
@@ -35,8 +36,18 @@ export async function GET(request: Request) {
         bgColor = settings.colors.background || bgColor;
         themeColor = settings.colors.primary || themeColor;
       }
+      if (settings.appName) {
+        initial = settings.appName.charAt(0).toUpperCase();
+      }
+      // Se c'è un logo su Storage, usalo direttamente
+      if (settings.logo && typeof settings.logo === "string" && settings.logo.startsWith("http")) {
+        logoUrl = settings.logo;
+      }
     }
   }
+
+  const svgBuffer = Buffer.from(svgIcon(initial, themeColor), "utf-8");
+  const dataUri = `data:image/svg+xml;base64,${svgBuffer.toString("base64")}`;
 
   const manifest = {
     name: name,
@@ -47,8 +58,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: iconUrl + "?s=192&uid=" + uid + iconVersion, sizes: "192x192" },
-      { src: iconUrl + "?s=512&uid=" + uid + iconVersion, sizes: "512x512" }
+      { src: logoUrl || dataUri, sizes: "192x192", type: logoUrl ? "image/png" : "image/svg+xml" },
+      { src: logoUrl || dataUri, sizes: "512x512", type: logoUrl ? "image/png" : "image/svg+xml" }
     ]
   };
 
