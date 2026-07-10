@@ -17,6 +17,7 @@ function LoginContent() {
 
   // Errore passato dal middleware o da altre route
   const redirectError = searchParams.get("error");
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,7 +47,7 @@ function LoginContent() {
         throw new Error("Errore durante il login");
       }
 
-      router.push("/dashboard");
+      router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore durante il login");
