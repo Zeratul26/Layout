@@ -18,10 +18,12 @@ export async function GET(request: Request) {
   let shortName = "Layout";
   let bgColor = "#F8FAFC";
   let themeColor = "#2563EB";
+  let uid = "";
   let initial = "L";
-  let logoUrl: string | null = null;
+  let hasLogo = false;
 
   if (user) {
+    uid = user.id;
     const { data: tenant } = await supabase
       .from("tenants")
       .select("theme_settings")
@@ -39,15 +41,15 @@ export async function GET(request: Request) {
       if (settings.appName) {
         initial = settings.appName.charAt(0).toUpperCase();
       }
-      // Se c'è un logo su Storage, usalo direttamente
-      if (settings.logo && typeof settings.logo === "string" && settings.logo.startsWith("http")) {
-        logoUrl = settings.logo;
-      }
+      hasLogo = !!(settings.logo && typeof settings.logo === "string");
     }
   }
 
-  const svgBuffer = Buffer.from(svgIcon(initial, themeColor), "utf-8");
-  const dataUri = `data:image/svg+xml;base64,${svgBuffer.toString("base64")}`;
+  // Usa sempre il nostro dominio per le icone (evita CORS con Storage)
+  const baseUrl = request.url.replace("/api/manifest", "/api/icon");
+  const iconSrc = hasLogo && uid
+    ? baseUrl + "?uid=" + uid
+    : `data:image/svg+xml;base64,${Buffer.from(svgIcon(initial, themeColor), "utf-8").toString("base64")}`;
 
   const manifest = {
     name: name,
@@ -58,8 +60,8 @@ export async function GET(request: Request) {
     background_color: bgColor,
     theme_color: themeColor,
     icons: [
-      { src: logoUrl || dataUri, sizes: "192x192", type: logoUrl ? "image/png" : "image/svg+xml" },
-      { src: logoUrl || dataUri, sizes: "512x512", type: logoUrl ? "image/png" : "image/svg+xml" }
+      { src: iconSrc, sizes: "192x192", type: hasLogo ? "image/png" : "image/svg+xml" },
+      { src: iconSrc, sizes: "512x512", type: hasLogo ? "image/png" : "image/svg+xml" }
     ]
   };
 

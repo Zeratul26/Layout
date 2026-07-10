@@ -36,11 +36,22 @@ export async function GET(request: Request) {
       .eq("id", tenantId)
       .single();
 
-    // Se c'è un logo (URL storage), redirect
+    // Se c'è un logo (URL storage), proxy (stessa origine, niente CORS)
     if (tenant?.theme_settings?.logo) {
       const logo: string = tenant.theme_settings.logo;
       if (logo.startsWith("http")) {
-        return NextResponse.redirect(logo, { headers: { "Cache-Control": "private, max-age=3600" } });
+        try {
+          const resp = await fetch(logo);
+          const buffer = Buffer.from(await resp.arrayBuffer());
+          return new NextResponse(buffer, {
+            headers: {
+              "Content-Type": resp.headers.get("content-type") || "image/png",
+              "Cache-Control": "private, max-age=3600"
+            }
+          });
+        } catch {
+          // Se fallisce, mostriamo il fallback SVG
+        }
       }
     }
 
