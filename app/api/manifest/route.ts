@@ -43,8 +43,9 @@ export async function GET(request: Request) {
     }
   }
 
-  // Usa l'icon route (funziona anche senza auth dopo aver disabilitato la protezione Vercel)
-  const iconUrl = `${request.url.replace("/api/manifest", "/api/icon")}?uid=${uid}`;
+  // Usa l'icon route (solo se uid presente)
+  const baseIconUrl = request.url.replace("/api/manifest", "/api/icon");
+  const iconUrl = uid ? `${baseIconUrl}?uid=${uid}` : baseIconUrl;
 
   const manifest = {
     name: name,

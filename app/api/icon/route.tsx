@@ -5,7 +5,8 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
 
-  let tenantId = searchParams.get("uid") || null;
+  const uidParam = searchParams.get("uid");
+  let tenantId = uidParam && uidParam.length > 0 ? uidParam : null;
   if (!tenantId) {
     const { data: { user } } = await supabase.auth.getUser();
     tenantId = user?.id || null;
