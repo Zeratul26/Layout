@@ -4,19 +4,23 @@ export async function POST(request: Request) {
   try {
     const { email, companyName } = await request.json();
 
+    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
     const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Benvenuto in Layout!</h2>
         <p>Ciao,</p>
         <p>La tua azienda <strong>${companyName}</strong> è stata registrata con successo.</p>
-        <p>La tua richiesta è in attesa di approvazione da parte di un amministratore.</p>
-        <p>Riceverai una notifica appena il tuo account sarà attivo.</p>
-        <p>Puoi accedere alla tua dashboard qui:</p>
-        <p>
-          <a href="${request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/login"
-             style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">
-            Vai alla Dashboard
+        <p>Clicca il pulsante qui sotto per attivare il tuo account e personalizzare il tema della tua dashboard.</p>
+        <p style="text-align: center; margin: 32px 0;">
+          <a href="${origin}/api/activate"
+             style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
+            Attiva il tuo account
           </a>
+        </p>
+        <p style="color: #6b7280; font-size: 14px; text-align: center;">
+          Se il pulsante non funziona, copia questo link nel browser:<br/>
+          <a href="${origin}/api/activate" style="color: #2563eb; font-size: 12px;">${origin}/api/activate</a>
         </p>
         <hr style="margin-top: 32px;" />
         <p style="color: #6b7280; font-size: 12px;">
