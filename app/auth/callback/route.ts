@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/api/activate";
 
   if (code) {
     const supabase = await createClient();
@@ -12,14 +11,18 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Il tenant è già stato creato dal trigger su auth.users
-      // Redirect a /api/activate per attivazione tenant, poi onboarding
-      return NextResponse.redirect(`${origin}${next}`);
+      // Attiva il tenant direttamente qui (nessun secondo redirect)
+      await supabase
+        .from("tenants")
+        .update({ status: "active" })
+        .eq("id", data.user.id);
+
+      return NextResponse.redirect(`${origin}/login?message=Account+attivato!+Accedi+dal+tuo+PC+per+configurare+la+tua+dashboard.`);
     }
   }
 
   // Errore: codice non valido o scaduto
   return NextResponse.redirect(
-    `${origin}/auth/error?message=Codice di verifica non valido o scaduto. Richiedi una nuova email.`
+    `${origin}/auth/error?message=Codice+di+verifica+non+valido+o+scaduto.+Richiedi+una+nuova+email.`
   );
 }

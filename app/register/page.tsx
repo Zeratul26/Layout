@@ -31,7 +31,7 @@ export default function RegisterPage() {
           data: {
             company_name: companyName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/api/activate`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
