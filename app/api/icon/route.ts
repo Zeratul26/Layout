@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-// Default icon come SVG inline (la lettera L)
-const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#2563EB"/>
-  <text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="280" font-weight="700" fill="white">L</text>
-</svg>`;
+import { ImageResponse } from "next/og";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -13,8 +8,8 @@ export async function GET(request: Request) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  // Default: icona con la lettera L
-  let svgContent = DEFAULT_SVG;
+  let initial = "L";
+  let primaryColor = "#2563EB";
 
   if (user) {
     const { data: tenant } = await supabase
@@ -23,9 +18,9 @@ export async function GET(request: Request) {
       .eq("id", user.id)
       .single();
 
+    // Se c'è un logo caricato, servilo come PNG
     if (tenant?.theme_settings?.logo) {
       const logo: string = tenant.theme_settings.logo;
-      // Se il logo è in base64, lo estraiamo
       if (logo.startsWith("data:image/")) {
         const parts = logo.split(",");
         const mime = parts[0].split(":")[1].split(";")[0];
@@ -38,27 +33,52 @@ export async function GET(request: Request) {
           }
         });
       }
-      // Se è un URL diretto, reindirizza
       if (logo.startsWith("http")) {
         return NextResponse.redirect(logo);
       }
     }
 
-    // Se c'è appName ma non logo, genera icona con iniziale
+    // Nessun logo: usa iniziale e colore dal tema
     if (tenant?.theme_settings?.appName) {
-      const initial = tenant.theme_settings.appName.charAt(0).toUpperCase();
-      const primaryColor = tenant.theme_settings?.colors?.primary || "#2563EB";
-      svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-        <rect width="512" height="512" rx="80" fill="${primaryColor}"/>
-        <text x="256" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="280" font-weight="700" fill="white">${initial}</text>
-      </svg>`;
+      initial = tenant.theme_settings.appName.charAt(0).toUpperCase();
+    }
+    if (tenant?.theme_settings?.colors?.primary) {
+      primaryColor = tenant.theme_settings.colors.primary;
     }
   }
 
-  return new NextResponse(svgContent, {
-    headers: {
-      "Content-Type": "image/svg+xml",
-      "Cache-Control": "private, max-age=86400"
+  // Genera PNG via ImageResponse (universalmente supportato come icona PWA)
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: 512,
+          height: 512,
+          borderRadius: 80,
+          backgroundColor: primaryColor,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 280,
+            fontWeight: 700,
+            color: "white",
+            fontFamily: "Inter, sans-serif",
+          }}
+        >
+          {initial}
+        </span>
+      </div>
+    ),
+    {
+      width: 512,
+      height: 512,
+      headers: {
+        "Cache-Control": "private, max-age=3600",
+      },
     }
-  });
+  );
 }

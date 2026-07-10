@@ -255,7 +255,9 @@ export default function OnboardingPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      alert("Errore durante il salvataggio. Riprova.");
+      const msg = err instanceof Error ? err.message : "Errore sconosciuto";
+      console.error("Salvataggio fallito:", msg, "logo salvato:", !!logoPreview);
+      alert("Errore: " + msg);
     } finally {
       setSaving(false);
     }
